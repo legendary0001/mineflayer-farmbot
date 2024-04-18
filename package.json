@@ -1,0 +1,23 @@
+{
+  "name": "mineflayer-wheatfarm-bot",
+  "version": "1.0.0",
+  "description": "a minecraft bot to farm wheat as wheat farm can only be semi automatic in minecraft",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "mineflayer",
+    "minecraft",
+    "bot"
+  ],
+  "author": "legendary0001",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "mineflayer": "^4.20.0",
+    "mineflayer-blockfinder": "^0.0.7",
+    "mineflayer-pathfinder": "^2.4.5",
+    "typescript": "^5.4.5"
+  }
+}

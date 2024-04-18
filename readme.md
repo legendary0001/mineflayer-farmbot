@@ -1,11 +1,12 @@
 # Minecraft Wheat Farming Bot
 
-This project is a Minecraft bot that automates wheat farming tasks. It uses the Mineflayer library to connect to a Minecraft server and perform actions like tilling land, planting seeds, and harvesting crops. The bot also manages its inventory, checks for valid block types, and handles disconnections and reconnections.
+This project is a Minecraft bot that automates wheat farming tasks. It uses the Mineflayer library to connect to a Minecraft server and perform actions like tilling land, planting seeds, and harvesting crops and putting it in chest . The bot also manages its inventory, checks for valid block types, and handles disconnections and reconnections.
 I made this because wheat farming is only semi automatic through redstone
 
 ## Features
 
 - farming: The bot can till land, plant seeds, and harvest crops.
+- overflow prevention: bot stoping farming if the chest nearby
 - Inventory management: The bot manages its inventory, equipping tools and seeds as needed, and depositing harvested crops in a chest.
 - Block type checking: The bot checks the type of each block in the specified farming area and performs the appropriate action.
 - Disconnection handling: The bot attempts to reconnect every 20 seconds if it gets disconnected.
@@ -34,7 +35,17 @@ I made this because wheat farming is only semi automatic through redstone
    - `!disable`: Disables automatic farming.
    - `!set`: Sets the farming area. The command format is `!set startcords endcords dustbincords`, e.g., `!set 1,2,3 4,5,6 7,8,9`.
 3. In minecraft, use the !set command
-
+## Notes 
+ 1. currently bot dies of hunger code has to be modified to disable sprint if hunger is low and also a function to eat food or craft and eat food is feasable
+ 2. bot doesnt defend itself
+ 3. bot doesnt do anti afk techniques if it is idle
+ 1 & 2 workaround - give bot effect through command block or set his respawn point(through bed by logging into bot or /setworldspawn cmd) near farm 
+ 3 - bot will rejoin if kicked by antiafk plugins so itsnt much of an isssue 
+## Roadmap
+ 1. hunger management
+ 2. defending
+ 3. anti afk
+ 4. more
 ## Contributing
 
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.

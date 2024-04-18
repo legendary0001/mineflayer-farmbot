@@ -4,15 +4,21 @@ const minecraftData = require("minecraft-data");
 const fs = require("fs");
 const { Vec3 } = require("vec3");
 const { pathfinder, Movements } = require("mineflayer-pathfinder");
-const { GoalNear, GoalBlock, GoalGetToBlock } =
-  require("mineflayer-pathfinder").goals;
+const { GoalNear, GoalGetToBlock } = require("mineflayer-pathfinder").goals;
 const blockCheckerInit = require("./utils/blockChecker");
 const itemHandlerInit = require("./utils/item");
-const produceMangerInit = require("./utils/produceManager");
+const produceManagerInit = require("./utils/produceManager");
 require("dotenv").config();
 const config = process.env;
 
-//load data
+// Initialize variables
+let bot;
+let reconnectInterval;
+let farmingInterval;
+let mcData;
+let farmingInProgress = false; // Flag to track whether farming is in progress
+let isConnected = false;
+// Load and initialize data
 try {
   if (!fs.existsSync("data.json")) {
     fs.writeFileSync("data.json", JSON.stringify({}));
@@ -20,10 +26,8 @@ try {
 } catch (err) {
   console.error(err);
 }
-let data = fs.readFileSync("data.json");
-let bot;
-let reconnectInterval;
-let farmingInterval;
+
+// Create bot function
 function createBot() {
   bot = mineflayer.createBot({
     host: config.host,
@@ -32,12 +36,17 @@ function createBot() {
     username: config.username || "",
     password: config.password || "",
   });
+
+  // Initialize utility instances
   const itemHandler = new itemHandlerInit(bot);
   const blockChecker = new blockCheckerInit(bot);
-  const produceManager = new produceMangerInit(bot);
-  let mcData;
+  const produceManager = new produceManagerInit(bot);
+
+  // Load plugins
   bot.loadPlugin(blockFinderPlugin);
   bot.loadPlugin(pathfinder);
+
+  // Bot event listeners
   bot.on("chat", async (username, message) => {
     console.log(`${username} said: ${message}`);
 
@@ -79,6 +88,7 @@ function createBot() {
       fs.writeFileSync("data.json", JSON.stringify(data));
     }
     if (message.includes("!set")) {
+      // split the message to get the coordinates
       let cords = message.split(" ");
       let start = cords[1]?.split(",");
       let end = cords[2]?.split(",");
@@ -100,6 +110,7 @@ function createBot() {
 
       // start[1] = String(Number(start[1]) - 1);
       // end[1] = String(Number(end[1]) - 1);
+      // y level minecraft cordinates displayed in f3 is 1 more than y coordinate of block
       dustbin[1] = String(Number(dustbin[1]) - 1);
 
       const startVec = new Vec3(...start.map(Number));
@@ -139,8 +150,8 @@ function createBot() {
       bot.chat("Farm area set successfully.");
     }
   });
-  let farmingInProgress = false; // Flag to track whether farming is in progress
-  let isConnected = false;
+  // Start the farming logic once the bot is logged in
+  // and clear the reconnect interval if it is set
   bot.once("login", async () => {
     console.log("Bot logged in ");
     isConnected = true;
@@ -183,10 +194,8 @@ function createBot() {
     console.log("Error occurred:", err);
   });
 
-  // is dirt => till the land
-  // is farmland => is block above empty => plant seeds
-  // is wheat => harvest
-  async function startFarming(mcData) {
+  // Main farming logic
+  async function startFarming() {
     bot.once("end", () => {
       console.log("Bot disconnected");
       isConnected = false;
@@ -200,9 +209,7 @@ function createBot() {
     produceManager.setcords(data.start.map(Number), data.dustbin.map(Number));
     const chest = await produceManager.findNearestChest(16, mcData);
     //console.log("Chest found", chest);
-    const wheatItems = bot.inventory
-      .items()
-      .filter((item) => item.name === "wheat");
+    //const wheatItems = bot.inventory.items() .filter((item) => item.name === "wheat");
 
     if (chest) {
       const space = await produceManager.calculateSpaceInChest(
@@ -436,7 +443,7 @@ function createBot() {
                 // Ensure the block is defined and has a position
                 if (block && block.position) {
                   // Calculate target position just above the block
-                  const targetPosition = block.position.offset(0.5, 1, 0.5); // Adjusted position just above the block
+                  // const targetPosition = block.position.offset(0.5, 1, 0.5); // Adjusted position just above the block
 
                   // Move towards the target position
                   console.log(
@@ -466,7 +473,7 @@ function createBot() {
                     bot.pathfinder.setMovements(MovementsAlowed);
                     bot.pathfinder.goto(goal);
                     console.log("moving to target position");
-                    await new Promise(async (resolve) => {
+                    await new Promise((resolve) => {
                       bot.once("goal_reached", async () => {
                         //  bot.pathfinder.setGoal(null); // Clear the goal once reached
                         console.log(
@@ -540,7 +547,6 @@ function createBot() {
         bot.chat(
           "No chest found near startCoords you gave during set command."
         );
-      } else if (wheatDeposit.reason === "nowheat") {
       } else if (
         wheatDeposit.reason === "notachest" ||
         wheatDeposit.reason === "chestnotavailable"
@@ -554,12 +560,15 @@ function createBot() {
     }
   }
 }
-createBot();
+// Reconnect bot function
 function reconnect() {
+  // return if bot is already connected
   if (bot && bot.connected) {
     console.log("Bot already connected.");
     return;
   }
+  // set reconnect interval to try to reconnect bot every 20 seconds
+  // if reconnect interval is not set
   if (!reconnectInterval) {
     reconnectInterval = setInterval(() => {
       console.log("Reconnecting bot...");
@@ -568,6 +577,8 @@ function reconnect() {
     }, 20000);
   }
 }
+// Delay function
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+createBot();

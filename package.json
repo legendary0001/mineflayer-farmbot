@@ -19,5 +19,10 @@
     "mineflayer-blockfinder": "^0.0.7",
     "mineflayer-pathfinder": "^2.4.5",
     "typescript": "^5.4.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "eslint": "^9.0.0",
+    "globals": "^15.0.0"
   }
 }

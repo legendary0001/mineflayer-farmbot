@@ -35,7 +35,7 @@ function createBot() {
     auth: config.auth,
     username: config.username || "",
     password: config.password || "",
-    version: config.version || null,
+  //  version: config.version || null,
   });
 
   // Initialize utility instances
@@ -583,3 +583,14 @@ function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 createBot();
+ // for nodejs version higher than 15
+// handle unhandled promise rejections
+process.on("unhandledRejection", (err) => {
+  console.error("Unhandled promise rejection:", err);
+ // process.exit(1);
+});
+// handle uncaught exceptions
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught exception:", err);
+ // process.exit(1);
+});

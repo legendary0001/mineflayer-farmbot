@@ -44,7 +44,7 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 This project is licensed under the MIT License.
 
 ## Troubleshooting
-
+If bot try to join incompattable / modded / offline aternos server it will give error `TypeError: Cannot read properties of undefined (reading 'minecraftVersion')` because they set their version as -1 which is invalid according to mineflayer d
 If you are using an Aternos server and encounter strange errors like(SyntaxError: "[object Object]" is not valid JSON
 at JSON.parse (<anonymous>)
 at Client.<anonymous> ) when the server is offline. This is because Aternos servers often have custom offline messages that cause issues with parsing JSON in the Mineflayer library.

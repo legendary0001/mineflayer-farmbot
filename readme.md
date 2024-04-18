@@ -32,7 +32,7 @@ I made this because wheat farming is only semi automatic through redstone
     - `!enable`: Enables automatic farming.
     - `!disable`: Disables automatic farming.
     - `!set`: Sets the farming area. The command format is `!set startcords endcords dustbincords`, e.g., `!set 1,2,3 4,5,6 7,8,9`.
-
+3. In minecraft, use the !set command
 ## Contributing
 
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.

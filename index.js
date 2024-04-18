@@ -35,6 +35,7 @@ function createBot() {
     auth: config.auth,
     username: config.username || "",
     password: config.password || "",
+    version: config.version || null,
   });
 
   // Initialize utility instances

@@ -35,7 +35,7 @@ function createBot() {
     auth: config.auth,
     username: config.username || "",
     password: config.password || "",
-  //  version: config.version || null,
+    version: config.version || null,
   });
 
   // Initialize utility instances
@@ -192,7 +192,7 @@ function createBot() {
     reconnect();
   });
   bot.on("error", (err) => {
-    console.log("Error occurred:", err);
+    console.log("Error occurred:", err.message);
   });
 
   // Main farming logic

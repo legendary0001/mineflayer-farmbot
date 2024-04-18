@@ -35,17 +35,22 @@ I made this because wheat farming is only semi automatic through redstone
    - `!disable`: Disables automatic farming.
    - `!set`: Sets the farming area. The command format is `!set startcords endcords dustbincords`, e.g., `!set 1,2,3 4,5,6 7,8,9`.
 3. In minecraft, use the !set command
-## Notes 
- 1. currently bot dies of hunger code has to be modified to disable sprint if hunger is low and also a function to eat food or craft and eat food is feasable
- 2. bot doesnt defend itself
- 3. bot doesnt do anti afk techniques if it is idle
- 1 & 2 workaround - give bot effect through command block or set his respawn point(through bed by logging into bot or /setworldspawn cmd) near farm 
- 3 - bot will rejoin if kicked by antiafk plugins so itsnt much of an isssue 
+
+## Notes
+
+1.  currently bot dies of hunger code has to be modified to disable sprint if hunger is low and also a function to eat food or craft and eat food is feasable
+2.  bot doesnt defend itself
+3.  bot doesnt do anti afk techniques if it is idle
+    1 & 2 workaround - give bot effect through command block(resistance,saturation,instanthealth,etc) or set his respawn point(through bed by logging into bot or /setworldspawn cmd) near farm or splashing saturation and health potions on him (expensive)
+    3 - bot will rejoin if kicked by antiafk plugins so itsnt much of an isssue
+
 ## Roadmap
- 1. hunger management
- 2. defending
- 3. anti afk
- 4. more
+
+1.  hunger management
+2.  defending
+3.  anti afk
+4.  more
+
 ## Contributing
 
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
@@ -55,6 +60,7 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 This project is licensed under the MIT License.
 
 ## Troubleshooting
+Rarely Pathfinding or maybe other issue bot might get stuck on death
 If bot try to join incompattable / modded / offline aternos server it will give error `TypeError: Cannot read properties of undefined (reading 'minecraftVersion')` because they set their version as -1 which is invalid according to mineflayer d
 If you are using an Aternos server and encounter strange errors like(SyntaxError: "[object Object]" is not valid JSON
 at JSON.parse (<anonymous>)

@@ -193,383 +193,397 @@ function createBot() {
   });
   bot.on("error", (err) => {
     console.log("Error occurred:", err.message);
+    if (err.code.includes("ECONNRESET")) {
+      console.log("Connection reset by peer");
+      isConnected = false;
+      farmingInProgress = false;
+      clearInterval(farmingInterval);
+      reconnect();
+    }
   });
 
   // Main farming logic
   async function startFarming() {
     try {
-    bot.once("end", () => {
-      console.log("Bot disconnected");
-      isConnected = false;
-      farmingInProgress = false;
-      return;
-    });
-    const data = JSON.parse(fs.readFileSync("data.json"));
-    if (!data || !data.enable || !data.start || !data.end || !data.dustbin) {
-      return;
-    }
-    produceManager.setcords(data.start.map(Number), data.dustbin.map(Number));
-    const chest = await produceManager.findNearestChest(16, mcData);
-    //console.log("Chest found", chest);
-    //const wheatItems = bot.inventory.items() .filter((item) => item.name === "wheat");
-
-    if (chest) {
-      const space = await produceManager.calculateSpaceInChest(
-        chest,
-        "wheat",
-        mcData
-      );
-      if (typeof space === "string") {
-        console.log(`Failed to calculate space in chest: ${space}`);
+      bot.once("end", () => {
+        console.log("Bot disconnected");
+        isConnected = false;
+        farmingInProgress = false;
+        return;
+      });
+      const data = JSON.parse(fs.readFileSync("data.json"));
+      if (!data || !data.enable || !data.start || !data.end || !data.dustbin) {
         return;
       }
-      if (space > 0) {
-        data.tempDisabled = false;
-        fs.writeFileSync("data.json", JSON.stringify(data));
-        if (data.tempDisabled) {
-          bot.chat("Farming re-enabled, chest space available.");
-        }
-      } else {
-        bot.chat("Chest found but no space available,  farming disabled.");
-        data.tempDisabled = true;
-        fs.writeFileSync("data.json", JSON.stringify(data));
-      }
-    }
-    if (data.tempDisabled) {
-      console.log("Farming is temporarily disabled due to full chest.");
-      return;
-    }
-    const startCoords = data.start.map(Number); // Convert coordinates to numbers
-    const endCoords = data.end.map(Number); // Convert coordinates to numbers
+      produceManager.setcords(data.start.map(Number), data.dustbin.map(Number));
+      const chest = await produceManager.findNearestChest(16, mcData);
+      //console.log("Chest found", chest);
+      //const wheatItems = bot.inventory.items() .filter((item) => item.name === "wheat");
 
-    console.log("Farming function called");
-
-    const startX = Math.min(startCoords[0], endCoords[0]);
-    const endX = Math.max(startCoords[0], endCoords[0]);
-    const startY = startCoords[1];
-    const startZ = Math.min(startCoords[2], endCoords[2]);
-    const endZ = Math.max(startCoords[2], endCoords[2]);
-    let requiredseedscount = 0;
-
-    for (let x = startX; x <= endX; x++) {
-      for (let z = startZ; z <= endZ; z++) {
-        if (!isConnected) {
-          console.log("Bot disconnected. not starting farming.");
-          return;
-        }
-        await produceManager.cleanInventoryIfNeeded(
-          data.dustbin.map(Number),
-          data.start.map(Number),
-          data.end.map(Number),
+      if (chest) {
+        const space = await produceManager.calculateSpaceInChest(
+          chest,
+          "wheat",
           mcData
         );
-        // console.log("Checking block at", x, startY, z);
-        try {
-          if (await blockChecker.isDirt(new Vec3(x, startY, z), mcData)) {
-            requiredseedscount++;
-            const block = await bot.blockAt(new Vec3(x, startY, z));
-            const aboveBlock = await bot.blockAt(new Vec3(x, startY + 1, z));
+        if (typeof space === "string") {
+          console.log(`Failed to calculate space in chest: ${space}`);
+          return;
+        }
+        if (space > 0) {
+          data.tempDisabled = false;
+          fs.writeFileSync("data.json", JSON.stringify(data));
+          if (data.tempDisabled) {
+            bot.chat("Farming re-enabled, chest space available.");
+          }
+        } else {
+          bot.chat("Chest found but no space available,  farming disabled.");
+          data.tempDisabled = true;
+          fs.writeFileSync("data.json", JSON.stringify(data));
+        }
+      }
+      if (data.tempDisabled) {
+        console.log("Farming is temporarily disabled due to full chest.");
+        return;
+      }
+      const startCoords = data.start.map(Number); // Convert coordinates to numbers
+      const endCoords = data.end.map(Number); // Convert coordinates to numbers
 
-            if (!block) {
-              console.log(`Block at ${x}, ${startY}, ${z} is not found`);
-              continue; // Skip to next iteration if block is not found
-            }
+      console.log("Farming function called");
 
-            console.log("Equipping hoe to till land at", x, startY, z);
+      const startX = Math.min(startCoords[0], endCoords[0]);
+      const endX = Math.max(startCoords[0], endCoords[0]);
+      const startY = startCoords[1];
+      const startZ = Math.min(startCoords[2], endCoords[2]);
+      const endZ = Math.max(startCoords[2], endCoords[2]);
+      let requiredseedscount = 0;
 
-            // Equip hoe (assuming this function works as expected)
-            const equipped = await itemHandler.equipHoe();
+      for (let x = startX; x <= endX; x++) {
+        for (let z = startZ; z <= endZ; z++) {
+          if (!isConnected) {
+            console.log("Bot disconnected. not starting farming.");
+            return;
+          }
+          await produceManager.cleanInventoryIfNeeded(
+            data.dustbin.map(Number),
+            data.start.map(Number),
+            data.end.map(Number),
+            mcData
+          );
+          // console.log("Checking block at", x, startY, z);
+          try {
+            if (await blockChecker.isDirt(new Vec3(x, startY, z), mcData)) {
+              requiredseedscount++;
+              const block = await bot.blockAt(new Vec3(x, startY, z));
+              const aboveBlock = await bot.blockAt(new Vec3(x, startY + 1, z));
 
-            // Ensure the block is defined and has a position
-            if (block && block.position) {
-              // Calculate target position just above the block
-              const targetPosition = block.position.offset(0.5, 1, 0.5); // Adjusted position just above the block
-
-              // Move towards the target position
-              if (equipped) {
-                if (bot.entity.position !== targetPosition) {
-                  const goal = new GoalNear(
-                    targetPosition.x,
-                    targetPosition.y,
-                    targetPosition.z,
-                    0.5
-                  ); // Set a tolerance of 0.5 block radius
-                  bot.pathfinder.setMovements(new Movements(bot, mcData));
-                  bot.pathfinder.setGoal(goal);
-                  await new Promise((resolve) => {
-                    bot.once("goal_reached", async () => {
-                      bot.pathfinder.setGoal(null); // Clear the goal once reached
-                      console.log(
-                        "unexpected goal (if not null)",
-                        bot.pathfinder.goal
-                      );
-                      console.log(
-                        `Bot reached position above block at ${x}, ${startY}, ${z}`
-                      );
-                      if (
-                        aboveBlock &&
-                        aboveBlock.type !== mcData.blocksByName.air.id
-                      ) {
-                        await bot.dig(aboveBlock);
-                        await itemHandler.equipHoe();
-                      }
-                      // Look at the block position
-                      await bot.lookAt(block.position);
-                      // If equipped with hoe, activate the block (till the land)
-                      console.log("equipped", equipped);
-                      if (equipped) {
-                        console.log("activating block");
-                        await bot.activateBlock(block);
-                        console.log("activated block");
-                      }
-
-                      resolve(); // Resolve the promise once the action is complete
-                    });
-                  });
-                } else {
-                  console.log("already at target position");
-                  if (
-                    aboveBlock &&
-                    aboveBlock.type !== mcData.blocksByName.air.id
-                  ) {
-                    await bot.dig(aboveBlock);
-                  }
-                  await bot.lookAt(block.position);
-
-                  // If equipped with hoe, activate the block (till the land)
-                  if (equipped) {
-                    console.log("activating block");
-                    await bot.activateBlock(block);
-                    console.log("activated block");
-                  }
-                }
+              if (!block) {
+                console.log(`Block at ${x}, ${startY}, ${z} is not found`);
+                continue; // Skip to next iteration if block is not found
               }
-              // Wait for bot to reach the target position
-            } else {
-              console.error(
-                `Block or block position is undefined at ${x}, ${startY}, ${z}`
-              );
-            }
-          } else if (
-            await blockChecker.isFarmland(new Vec3(x, startY, z), mcData)
-          ) {
-            requiredseedscount++;
-            const block = await bot.blockAt(new Vec3(x, startY, z));
 
-            if (!block) {
-              console.log(`Block at ${x}, ${startY + 1}, ${z} is not found`);
-              continue; // Skip to next iteration if block is not found
-            }
-            if (
-              await blockChecker.isWheat(new Vec3(x, startY + 1, z), mcData)
-            ) {
-              const wheatBlock = await bot.blockAt(new Vec3(x, startY + 1, z));
-              const wheatAge = wheatBlock.metadata;
-              //console.log("Wheat age", wheatAge);
-              if (wheatAge === 7) {
-                console.log("Harvesting wheat at", x, startY + 1, z);
+              console.log("Equipping hoe to till land at", x, startY, z);
 
-                if (block && block.position) {
-                  // Calculate target position just above the block
-                  const targetPosition = block.position.offset(0.5, 1, 0.5); // Adjusted position just above the block
-                  const currentPos = bot.entity.position;
+              // Equip hoe (assuming this function works as expected)
+              const equipped = await itemHandler.equipHoe();
 
-                  // Move towards the target position
-                  if (currentPos !== targetPosition) {
-                    const goal = new GoalGetToBlock(
+              // Ensure the block is defined and has a position
+              if (block && block.position) {
+                // Calculate target position just above the block
+                const targetPosition = block.position.offset(0.5, 1, 0.5); // Adjusted position just above the block
+
+                // Move towards the target position
+                if (equipped) {
+                  if (bot.entity.position !== targetPosition) {
+                    const goal = new GoalNear(
                       targetPosition.x,
                       targetPosition.y,
-                      targetPosition.z
-                      // 0.5
+                      targetPosition.z,
+                      0.5
                     ); // Set a tolerance of 0.5 block radius
-                    bot.pathfinder.setMovements(new Movements(bot));
+                    bot.pathfinder.setMovements(new Movements(bot, mcData));
                     bot.pathfinder.setGoal(goal);
-                  } else {
-                    bot.emit("goal_reached");
-                  }
-                  // Wait for bot to reach the target position
-                  await new Promise((resolve) => {
-                    bot.once("goal_reached", async () => {
-                      bot.pathfinder.setGoal(null); // Clear the goal once reached
-                      console.log(
-                        "unexpected goal (if not null)",
-                        bot.pathfinder.goal
-                      );
-
-                      console.log(
-                        `Bot reached position above block at ${x}, ${
-                          startY + 1
-                        }, ${z}`
-                      );
-                      // Look at the block position
-                      bot.lookAt(block.position);
-                      // If equipped with seeds, activate the block (plant the seeds)
-                      await bot.dig(wheatBlock);
-                      // await produceManager.collectWheat();
-                      // Delay for a short period to allow items to drop
-                      await delay(1000);
-
-                      const hasSeeds = itemHandler.hasItemByName("wheat_seeds");
-                      console.log("hasSeeds", hasSeeds);
-                      if (hasSeeds) {
-                        console.log(
-                          "Equipping seeds to plant at",
-                          x,
-                          startY + 1,
-                          z
-                        );
-                        const seedsEquipped = await itemHandler.equipItem(
-                          "wheat_seeds"
-                        );
-                        if (seedsEquipped) {
-                          console.log("activating block");
-                          await bot.activateBlock(block);
-                          console.log("activated block");
-                        }
-                      } else {
-                        console.log("No seeds found in inventory");
-                      }
-                      resolve(); // Resolve the promise once the action is complete
-                    });
-                  });
-                }
-              }
-            } else {
-              const hasSeeds = itemHandler.hasItemByName("wheat_seeds");
-              // console.log("hasSeeds", hasSeeds);
-
-              if (hasSeeds) {
-                console.log("Equipping seeds to plant at", x, startY + 1, z);
-                const seedsEquipped = await itemHandler.equipItem(
-                  "wheat_seeds"
-                );
-
-                // Ensure the block is defined and has a position
-                if (block && block.position) {
-                  // Calculate target position just above the block
-                  // const targetPosition = block.position.offset(0.5, 1, 0.5); // Adjusted position just above the block
-
-                  // Move towards the target position
-                  console.log(
-                    "blockPosition ",
-                    block.position,
-                    "\n",
-                    "blockPosition rounded ",
-                    block.position.rounded()
-                  );
-                  const currentPos = bot.entity.position;
-                  console.log(
-                    "currentPos ",
-                    currentPos,
-                    "\n",
-                    "currentPos rounded",
-                    currentPos.rounded()
-                  );
-                  if (!currentPos.floored().equals(block.position.rounded())) {
-                    const goal = new GoalGetToBlock(
-                      block.position.x,
-                      block.position.y + 1,
-                      block.position.z
-                      //   0.8
-                    ); // Set a tolerance of 0.5 block radius
-                    const MovementsAlowed = new Movements(bot);
-                    // MovementsAlowed.allowSprinting = false;
-                    bot.pathfinder.setMovements(MovementsAlowed);
-                    bot.pathfinder.goto(goal);
-                    console.log("moving to target position");
                     await new Promise((resolve) => {
                       bot.once("goal_reached", async () => {
-                        //  bot.pathfinder.setGoal(null); // Clear the goal once reached
+                        bot.pathfinder.setGoal(null); // Clear the goal once reached
                         console.log(
                           "unexpected goal (if not null)",
                           bot.pathfinder.goal
                         );
-
-                        console.log("bot is on targetPosition");
+                        console.log(
+                          `Bot reached position above block at ${x}, ${startY}, ${z}`
+                        );
+                        if (
+                          aboveBlock &&
+                          aboveBlock.type !== mcData.blocksByName.air.id
+                        ) {
+                          await bot.dig(aboveBlock);
+                          await itemHandler.equipHoe();
+                        }
                         // Look at the block position
                         await bot.lookAt(block.position);
-                        // If equipped with seeds, activate the block (plant the seeds)
-                        console.log("seedsEquipped", seedsEquipped);
-                        if (seedsEquipped) {
+                        // If equipped with hoe, activate the block (till the land)
+                        console.log("equipped", equipped);
+                        if (equipped) {
                           console.log("activating block");
                           await bot.activateBlock(block);
                           console.log("activated block");
                         }
+
                         resolve(); // Resolve the promise once the action is complete
                       });
                     });
                   } else {
                     console.log("already at target position");
+                    if (
+                      aboveBlock &&
+                      aboveBlock.type !== mcData.blocksByName.air.id
+                    ) {
+                      await bot.dig(aboveBlock);
+                    }
                     await bot.lookAt(block.position);
-                    // If equipped with seeds, activate the block (plant the seeds)
-                    if (seedsEquipped) {
+
+                    // If equipped with hoe, activate the block (till the land)
+                    if (equipped) {
+                      console.log("activating block");
                       await bot.activateBlock(block);
+                      console.log("activated block");
                     }
                   }
-                  // Wait for bot to reach the target position
-                } else {
-                  console.error(
-                    `Block or block position is undefined at ${x}, ${
-                      startY + 1
-                    }, ${z}`
-                  );
+                }
+                // Wait for bot to reach the target position
+              } else {
+                console.error(
+                  `Block or block position is undefined at ${x}, ${startY}, ${z}`
+                );
+              }
+            } else if (
+              await blockChecker.isFarmland(new Vec3(x, startY, z), mcData)
+            ) {
+              requiredseedscount++;
+              const block = await bot.blockAt(new Vec3(x, startY, z));
+
+              if (!block) {
+                console.log(`Block at ${x}, ${startY + 1}, ${z} is not found`);
+                continue; // Skip to next iteration if block is not found
+              }
+              if (
+                await blockChecker.isWheat(new Vec3(x, startY + 1, z), mcData)
+              ) {
+                const wheatBlock = await bot.blockAt(
+                  new Vec3(x, startY + 1, z)
+                );
+                const wheatAge = wheatBlock.metadata;
+                //console.log("Wheat age", wheatAge);
+                if (wheatAge === 7) {
+                  console.log("Harvesting wheat at", x, startY + 1, z);
+
+                  if (block && block.position) {
+                    // Calculate target position just above the block
+                    const targetPosition = block.position.offset(0.5, 1, 0.5); // Adjusted position just above the block
+                    const currentPos = bot.entity.position;
+
+                    // Move towards the target position
+                    if (currentPos !== targetPosition) {
+                      const goal = new GoalGetToBlock(
+                        targetPosition.x,
+                        targetPosition.y,
+                        targetPosition.z
+                        // 0.5
+                      ); // Set a tolerance of 0.5 block radius
+                      bot.pathfinder.setMovements(new Movements(bot));
+                      bot.pathfinder.setGoal(goal);
+                    } else {
+                      bot.emit("goal_reached");
+                    }
+                    // Wait for bot to reach the target position
+                    await new Promise((resolve) => {
+                      bot.once("goal_reached", async () => {
+                        bot.pathfinder.setGoal(null); // Clear the goal once reached
+                        console.log(
+                          "unexpected goal (if not null)",
+                          bot.pathfinder.goal
+                        );
+
+                        console.log(
+                          `Bot reached position above block at ${x}, ${
+                            startY + 1
+                          }, ${z}`
+                        );
+                        // Look at the block position
+                        bot.lookAt(block.position);
+                        // If equipped with seeds, activate the block (plant the seeds)
+                        await bot.dig(wheatBlock);
+                        // await produceManager.collectWheat();
+                        // Delay for a short period to allow items to drop
+                        await delay(1000);
+
+                        const hasSeeds =
+                          itemHandler.hasItemByName("wheat_seeds");
+                        console.log("hasSeeds", hasSeeds);
+                        if (hasSeeds) {
+                          console.log(
+                            "Equipping seeds to plant at",
+                            x,
+                            startY + 1,
+                            z
+                          );
+                          const seedsEquipped = await itemHandler.equipItem(
+                            "wheat_seeds"
+                          );
+                          if (seedsEquipped) {
+                            console.log("activating block");
+                            await bot.activateBlock(block);
+                            console.log("activated block");
+                          }
+                        } else {
+                          console.log("No seeds found in inventory");
+                        }
+                        resolve(); // Resolve the promise once the action is complete
+                      });
+                    });
+                  }
                 }
               } else {
-                //console.log("No seeds found in inventory");
+                const hasSeeds = itemHandler.hasItemByName("wheat_seeds");
+                // console.log("hasSeeds", hasSeeds);
+
+                if (hasSeeds) {
+                  console.log("Equipping seeds to plant at", x, startY + 1, z);
+                  const seedsEquipped = await itemHandler.equipItem(
+                    "wheat_seeds"
+                  );
+
+                  // Ensure the block is defined and has a position
+                  if (block && block.position) {
+                    // Calculate target position just above the block
+                    // const targetPosition = block.position.offset(0.5, 1, 0.5); // Adjusted position just above the block
+
+                    // Move towards the target position
+                    console.log(
+                      "blockPosition ",
+                      block.position,
+                      "\n",
+                      "blockPosition rounded ",
+                      block.position.rounded()
+                    );
+                    const currentPos = bot.entity.position;
+                    console.log(
+                      "currentPos ",
+                      currentPos,
+                      "\n",
+                      "currentPos rounded",
+                      currentPos.rounded()
+                    );
+                    if (
+                      !currentPos.floored().equals(block.position.rounded())
+                    ) {
+                      const goal = new GoalGetToBlock(
+                        block.position.x,
+                        block.position.y + 1,
+                        block.position.z
+                        //   0.8
+                      ); // Set a tolerance of 0.5 block radius
+                      const MovementsAlowed = new Movements(bot);
+                      // MovementsAlowed.allowSprinting = false;
+                      bot.pathfinder.setMovements(MovementsAlowed);
+                      bot.pathfinder.goto(goal);
+                      console.log("moving to target position");
+                      await new Promise((resolve) => {
+                        bot.once("goal_reached", async () => {
+                          //  bot.pathfinder.setGoal(null); // Clear the goal once reached
+                          console.log(
+                            "unexpected goal (if not null)",
+                            bot.pathfinder.goal
+                          );
+
+                          console.log("bot is on targetPosition");
+                          // Look at the block position
+                          await bot.lookAt(block.position);
+                          // If equipped with seeds, activate the block (plant the seeds)
+                          console.log("seedsEquipped", seedsEquipped);
+                          if (seedsEquipped) {
+                            console.log("activating block");
+                            await bot.activateBlock(block);
+                            console.log("activated block");
+                          }
+                          resolve(); // Resolve the promise once the action is complete
+                        });
+                      });
+                    } else {
+                      console.log("already at target position");
+                      await bot.lookAt(block.position);
+                      // If equipped with seeds, activate the block (plant the seeds)
+                      if (seedsEquipped) {
+                        await bot.activateBlock(block);
+                      }
+                    }
+                    // Wait for bot to reach the target position
+                  } else {
+                    console.error(
+                      `Block or block position is undefined at ${x}, ${
+                        startY + 1
+                      }, ${z}`
+                    );
+                  }
+                } else {
+                  //console.log("No seeds found in inventory");
+                }
               }
             }
+          } catch (error) {
+            console.error(
+              `Error while processing block at ${x}, ${startY}, ${z}:`,
+              error
+            );
+            // Handle any errors that occur during block processing
           }
-        } catch (error) {
-          console.error(
-            `Error while processing block at ${x}, ${startY}, ${z}:`,
-            error
-          );
-          // Handle any errors that occur during block processing
         }
       }
-    }
-    if (!isConnected) {
-      console.log("Bot disconnected. Stopping farming.");
-      return;
-    }
-    console.log("requiredseedscount", requiredseedscount);
-    await produceManager.accurateCleanExtraseeds(requiredseedscount, mcData);
-    if (!isConnected) {
-      console.log("Bot disconnected. Stopping farming.");
-      return;
-    }
-    const wheatDeposit = await produceManager.depositWheatIfNeeded(16, mcData);
-    if (wheatDeposit.success) {
-      console.log(`Deposited ${wheatDeposit.depositedCount} wheat into chest.`);
-    } else {
-      console.log(`Failed to deposit wheat: ${wheatDeposit.reason}`);
-      if (wheatDeposit.reason === "chestfull") {
-        console.log("Disabling farming temporarily due to full chest");
-        data.tempDisabled = true;
-        fs.writeFileSync("data.json", JSON.stringify(data));
-      } else if (wheatDeposit.reason === "nochest") {
-        bot.chat(
-          "No chest found near startCoords you gave during set command."
-        );
-      } else if (
-        wheatDeposit.reason === "notachest" ||
-        wheatDeposit.reason === "chestnotavailable"
-      ) {
-        bot.chat("No chest found nearby to deposit wheat.");
-      } else if (wheatDeposit.reason === "chestopenfailed") {
-        bot.chat("Failed to open chest to deposit wheat.");
-      } else {
-        bot.chat(`Failed to deposit wheat: ${wheatDeposit.reason}`);
+      if (!isConnected) {
+        console.log("Bot disconnected. Stopping farming.");
+        return;
       }
-    
+      console.log("requiredseedscount", requiredseedscount);
+      await produceManager.accurateCleanExtraseeds(requiredseedscount, mcData);
+      if (!isConnected) {
+        console.log("Bot disconnected. Stopping farming.");
+        return;
+      }
+      const wheatDeposit = await produceManager.depositWheatIfNeeded(
+        16,
+        mcData
+      );
+      if (wheatDeposit.success) {
+        console.log(
+          `Deposited ${wheatDeposit.depositedCount} wheat into chest.`
+        );
+      } else {
+        console.log(`Failed to deposit wheat: ${wheatDeposit.reason}`);
+        if (wheatDeposit.reason === "chestfull") {
+          console.log("Disabling farming temporarily due to full chest");
+          data.tempDisabled = true;
+          fs.writeFileSync("data.json", JSON.stringify(data));
+        } else if (wheatDeposit.reason === "nochest") {
+          bot.chat(
+            "No chest found near startCoords you gave during set command."
+          );
+        } else if (
+          wheatDeposit.reason === "notachest" ||
+          wheatDeposit.reason === "chestnotavailable"
+        ) {
+          bot.chat("No chest found nearby to deposit wheat.");
+        } else if (wheatDeposit.reason === "chestopenfailed") {
+          bot.chat("Failed to open chest to deposit wheat.");
+        } else {
+          bot.chat(`Failed to deposit wheat: ${wheatDeposit.reason}`);
+        }
+      }
+    } catch (error) {
+      console.error("Error in startFarming", error);
+      farmingInProgress = false;
     }
-
-  } catch (error) {
-    console.error("Error in startFarming", error);
-    farmingInProgress = false;
-
   }
-}
 }
 // Reconnect bot function
 function reconnect() {

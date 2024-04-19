@@ -7,7 +7,7 @@ class ProduceManager {
     this.dustbinCoords = null;
     this.isNavigating = false;
   }
-  async cleanInventoryIfNeeded(dustbinCoords, startPos ,endPos ,mcData) {
+  async cleanInventoryIfNeeded(dustbinCoords, startPos, endPos, mcData) {
     this.dustbinCoords = dustbinCoords;
     this.startPos = startPos;
     this.endPos = endPos;
@@ -18,7 +18,7 @@ class ProduceManager {
       console.log(
         `Inventory space is low (${emptySlots} empty slots). Cleaning inventory...`
       );
-      await this.cleanInventory( mcData);
+      await this.cleanInventory(mcData);
     } else {
       //  console.log(    `Inventory space is sufficient (${emptySlots} empty slots). No cleaning needed.`  );
     }
@@ -27,11 +27,13 @@ class ProduceManager {
   async cleanInventory(mcData) {
     const items = this.bot.inventory.items();
     const itemsToToss = items.filter((item) => !this.shouldKeepItem(item));
-    const seedsCount = items.filter((item) => item.name === "wheat_seeds").length
-   const requiredseeds = this.roughCleanExtraseeds(this.startPos , this.endPos);
+    const seedsCount = items.filter(
+      (item) => item.name === "wheat_seeds"
+    ).length;
+    const requiredseeds = this.roughCleanExtraseeds(this.startPos, this.endPos);
     const seedsToToss = seedsCount - requiredseeds;
-   
-   if (itemsToToss.length === 0) {
+
+    if (itemsToToss.length === 0) {
       console.log("No items to toss.");
       return;
     }
@@ -43,20 +45,20 @@ class ProduceManager {
 
     for (const item of itemsToToss) {
       await this.bot.tossStack(item);
-    } 
+    }
     if (seedsToToss > 0) {
-    await this.bot.toss(mcData.itemsByName.wheat_seeds.id, null, seedsToToss);
+      await this.bot.toss(mcData.itemsByName.wheat_seeds.id, null, seedsToToss);
     }
     await this.goback();
     this.dustbinCoords = null;
   }
-  roughCleanExtraseeds(startPos , endPos) {
+  roughCleanExtraseeds(startPos, endPos) {
     const dx = endPos[0] - startPos[0];
     const dy = endPos[1] - startPos[1];
     const dz = endPos[2] - startPos[2];
-    
+
     // Euclidean distance formula
-    const requiredseeds =  Math.sqrt(dx * dx + dy * dy + dz * dz)
+    const requiredseeds = Math.sqrt(dx * dx + dy * dy + dz * dz);
     console.log("roughrequiredseeds", requiredseeds);
     return requiredseeds;
   }
@@ -130,9 +132,13 @@ class ProduceManager {
             console.log("Failed to open chest inventory.");
             return { success: false, reason: "chestopenfailed" };
           }
-       
+
           let depositedCount = 0;
           for (const item of wheatItems) {
+            if (depositedCount >= spaceForWheat) {
+              console.log("Chest is full. Stopping wheat deposit.");
+              break;
+            }
             await chestInventory.deposit(
               mcData.itemsByName.wheat.id,
               null,
@@ -140,7 +146,7 @@ class ProduceManager {
             );
             depositedCount += item.count;
           }
-       //   console.log("wheatItems", wheatItems);
+          //   console.log("wheatItems", wheatItems);
           await chestInventory.close();
 
           return {
@@ -244,7 +250,7 @@ class ProduceManager {
     this.startPos = startcords;
     this.dustbinCoords = dustbinCoords;
   }
-  async calculateSpaceInChest(chest,/* itemType, mcData*/) {
+  async calculateSpaceInChest(chest /* itemType, mcData*/) {
     try {
       if (!chest) {
         console.log("Chest is not available.");

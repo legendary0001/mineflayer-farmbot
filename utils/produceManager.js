@@ -42,9 +42,10 @@ class ProduceManager {
       this.isNavigating = true;
       await this.navigateToDustbin();
     }
-
-    for (const item of itemsToToss) {
-      await this.bot.tossStack(item);
+    if (itemsToToss.length > 0) {
+      for (const item of itemsToToss) {
+        await this.bot.tossStack(item);
+      }
     }
     if (seedsToToss > 0) {
       await this.bot.toss(mcData.itemsByName.wheat_seeds.id, null, seedsToToss);

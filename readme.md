@@ -50,7 +50,8 @@ I made this because wheat farming is only semi automatic through redstone
 2.  defending
 3.  anti afk
 4.  actions based on fastest route instead of lopping through farm cords
-5. more 
+5.  check if required seeds count doesnt exceed inventory space and minempty slots limit
+6.  more 
 
 ## Contributing
 

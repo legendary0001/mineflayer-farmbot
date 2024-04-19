@@ -18,7 +18,6 @@ let farmingInterval;
 let mcData;
 let farmingInProgress = false; // Flag to track whether farming is in progress
 let isConnected = false;
-let NonFarmableBlocksCount = 0;
 // Load and initialize data
 try {
   if (!fs.existsSync("data.json")) {
@@ -274,6 +273,7 @@ function createBot() {
           // console.log("Checking block at", x, startY, z);
           try {
             if (await blockChecker.isDirt(new Vec3(x, startY, z), mcData)) {
+              requiredseedscount++;
               const block = await bot.blockAt(new Vec3(x, startY, z));
               const aboveBlock = await bot.blockAt(new Vec3(x, startY + 1, z));
 
@@ -360,6 +360,7 @@ function createBot() {
             } else if (
               await blockChecker.isFarmland(new Vec3(x, startY, z), mcData)
             ) {
+              requiredseedscount++;
               const block = await bot.blockAt(new Vec3(x, startY, z));
 
               if (!block) {
@@ -529,8 +530,6 @@ function createBot() {
                   //console.log("No seeds found in inventory");
                 }
               }
-            } else {
-              NonFarmableBlocksCount += 1;
             }
           } catch (error) {
             console.error(
@@ -545,13 +544,6 @@ function createBot() {
         console.log("Bot disconnected. Stopping farming.");
         return;
       }
-      console.log("NonFarmableBlocksCount", NonFarmableBlocksCount);
-      requiredseedscount =
-        produceManager.roughCleanExtraseeds(mcData) - NonFarmableBlocksCount;
-      console.log(
-        "farmableblocks",
-        requiredseedscount - NonFarmableBlocksCount
-      );
       console.log("requiredseedscount", requiredseedscount);
       await produceManager.accurateCleanExtraseeds(requiredseedscount, mcData);
       if (!isConnected) {

@@ -13,8 +13,9 @@ class ProduceManager {
     this.endPos = endPos;
     const emptySlots = this.bot.inventory.emptySlotCount();
     const minEmptySlots = 10; // Minimum number of empty slots to trigger cleaning
-
-    if (emptySlots < minEmptySlots) {
+ // todo: check if required seeds count doesnt exceed inventory space and minempty slots limit
+ 
+ if (emptySlots < minEmptySlots) {
       console.log(
         `Inventory space is low (${emptySlots} empty slots). Cleaning inventory...`
       );
@@ -53,10 +54,14 @@ class ProduceManager {
     await this.goback();
     this.dustbinCoords = null;
   }
+  // keeping rough count of seeds to prevent overflow of seeds in inventory
+  
   roughCleanExtraseeds(startPos, endPos) {
-    const length = Math.abs(endPos[0] - startPos[0]);
+    startPos ? startPos : this.startPos;
+    endPos ? endPos : this.endPos;
+    const length = Math.abs(endPos[0] - startPos[0]) +1;
 
-    const width = Math.abs(endPos[2] - startPos[2]);
+    const width = Math.abs(endPos[2] - startPos[2]) +1;
 
     // area
     const requiredseeds = length * width;
@@ -248,8 +253,9 @@ class ProduceManager {
       });
     });
   }
-  setcords(startcords, dustbinCoords) {
+  setcords(startcords, endcords, dustbinCoords) {
     this.startPos = startcords;
+    this.endPos = endcords;
     this.dustbinCoords = dustbinCoords;
   }
   async calculateSpaceInChest(chest /* itemType, mcData*/) {

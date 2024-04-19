@@ -16,10 +16,14 @@ class BlockChecker {
   }
 
   async isDirt(pos, mcData) {
-    return (
+    if (
       this.checkBlockType(pos, mcData, "dirt") ||
       this.checkBlockType(pos, mcData, "grass_block")
-    );
+    ) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
   async isFarmland(pos, mcData) {

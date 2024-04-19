@@ -53,12 +53,12 @@ class ProduceManager {
     this.dustbinCoords = null;
   }
   roughCleanExtraseeds(startPos, endPos) {
-    const dx = endPos[0] - startPos[0];
-    const dy = endPos[1] - startPos[1];
-    const dz = endPos[2] - startPos[2];
+    const length = Math.abs(endPos[0] - startPos[0]);
+   
+    const width = Math.abs(endPos[2] - startPos[2]);
 
-    // Euclidean distance formula
-    const requiredseeds = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    // area
+    const requiredseeds =  length * width;
     console.log("roughrequiredseeds", requiredseeds);
     return requiredseeds;
   }
@@ -138,13 +138,15 @@ class ProduceManager {
             if (depositedCount >= spaceForWheat) {
               console.log("Chest is full. Stopping wheat deposit.");
               break;
-            }
+            
+            } else {
             await chestInventory.deposit(
               mcData.itemsByName.wheat.id,
               null,
               item.count
             );
             depositedCount += item.count;
+          }
           }
           //   console.log("wheatItems", wheatItems);
           await chestInventory.close();

@@ -197,6 +197,7 @@ function createBot() {
 
   // Main farming logic
   async function startFarming() {
+    try {
     bot.once("end", () => {
       console.log("Bot disconnected");
       isConnected = false;
@@ -258,7 +259,9 @@ function createBot() {
         }
         await produceManager.cleanInventoryIfNeeded(
           data.dustbin.map(Number),
-          data.start.map(Number)
+          data.start.map(Number),
+          data.end.map(Number),
+          mcData
         );
         // console.log("Checking block at", x, startY, z);
         try {
@@ -530,7 +533,7 @@ function createBot() {
       return;
     }
     console.log("requiredseedscount", requiredseedscount);
-    await produceManager.cleanExtraseeds(requiredseedscount, mcData);
+    await produceManager.accurateCleanExtraseeds(requiredseedscount, mcData);
     if (!isConnected) {
       console.log("Bot disconnected. Stopping farming.");
       return;
@@ -558,8 +561,15 @@ function createBot() {
       } else {
         bot.chat(`Failed to deposit wheat: ${wheatDeposit.reason}`);
       }
+    
     }
+
+  } catch (error) {
+    console.error("Error in startFarming", error);
+    farmingInProgress = false;
+
   }
+}
 }
 // Reconnect bot function
 function reconnect() {

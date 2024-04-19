@@ -7,9 +7,10 @@ class ProduceManager {
     this.dustbinCoords = null;
     this.isNavigating = false;
   }
-  async cleanInventoryIfNeeded(dustbinCoords, startPos) {
+  async cleanInventoryIfNeeded(dustbinCoords, startPos ,endPos ,mcData) {
     this.dustbinCoords = dustbinCoords;
     this.startPos = startPos;
+    this.endPos = endPos;
     const emptySlots = this.bot.inventory.emptySlotCount();
     const minEmptySlots = 10; // Minimum number of empty slots to trigger cleaning
 
@@ -17,17 +18,20 @@ class ProduceManager {
       console.log(
         `Inventory space is low (${emptySlots} empty slots). Cleaning inventory...`
       );
-      await this.cleanInventory();
+      await this.cleanInventory( mcData);
     } else {
       //  console.log(    `Inventory space is sufficient (${emptySlots} empty slots). No cleaning needed.`  );
     }
   }
 
-  async cleanInventory() {
+  async cleanInventory(mcData) {
     const items = this.bot.inventory.items();
     const itemsToToss = items.filter((item) => !this.shouldKeepItem(item));
-
-    if (itemsToToss.length === 0) {
+    const seedsCount = items.filter((item) => item.name === "wheat_seeds").length
+   const requiredseeds = this.roughCleanExtraseeds(this.startPos , this.endPos);
+    const seedsToToss = seedsCount - requiredseeds;
+   
+   if (itemsToToss.length === 0) {
       console.log("No items to toss.");
       return;
     }
@@ -39,11 +43,23 @@ class ProduceManager {
 
     for (const item of itemsToToss) {
       await this.bot.tossStack(item);
+    } 
+    if (seedsToToss > 0) {
+    await this.bot.toss(mcData.itemsByName.wheat_seeds.id, null, seedsToToss);
     }
     await this.goback();
     this.dustbinCoords = null;
   }
-
+  roughCleanExtraseeds(startPos , endPos) {
+    const dx = endPos[0] - startPos[0];
+    const dy = endPos[1] - startPos[1];
+    const dz = endPos[2] - startPos[2];
+    
+    // Euclidean distance formula
+    const requiredseeds =  Math.sqrt(dx * dx + dy * dy + dz * dz)
+    console.log("roughrequiredseeds", requiredseeds);
+    return requiredseeds;
+  }
   shouldKeepItem(item) {
     // Check if the item's name includes any of the allowed items
     return this.allowedItems.some((allowedItem) =>
@@ -192,16 +208,18 @@ class ProduceManager {
     });
     return chestblock;
   }
-  async cleanExtraseeds(requiredseeds, mcData) {
+  async accurateCleanExtraseeds(requiredseeds, mcData) {
     const seedsCount = this.bot.inventory.count(
       mcData.itemsByName.wheat_seeds.id
     );
     console.log("seedsCount", seedsCount);
     if (seedsCount > requiredseeds) {
       const seedsToToss = seedsCount - requiredseeds;
+      /*
       const seeds = this.bot.inventory
         .items()
         .filter((item) => item.name === "wheat_seeds");
+        */
       await this.navigateToDustbin();
       await this.bot.toss(mcData.itemsByName.wheat_seeds.id, null, seedsToToss);
       await this.goback();
@@ -226,7 +244,7 @@ class ProduceManager {
     this.startPos = startcords;
     this.dustbinCoords = dustbinCoords;
   }
-  async calculateSpaceInChest(chest, itemType, mcData) {
+  async calculateSpaceInChest(chest,/* itemType, mcData*/) {
     try {
       if (!chest) {
         console.log("Chest is not available.");
@@ -280,9 +298,11 @@ class ProduceManager {
       return " unexptected error";
     }
   }
+  /*
   async collectWheat(mcData) {
   const wheatentity = mcData.blocksByName.wheat.id;
   }
+  */
 }
 
 module.exports = ProduceManager;

@@ -27,9 +27,9 @@ class ProduceManager {
   async cleanInventory(mcData) {
     const items = this.bot.inventory.items();
     const itemsToToss = items.filter((item) => !this.shouldKeepItem(item));
-    const seedsCount = items.filter(
-      (item) => item.name === "wheat_seeds"
-    ).length;
+    const seedsCount = this.bot.inventory.count(
+      mcData.itemsByName.wheat_seeds.id
+    );
     const requiredseeds = this.roughCleanExtraseeds(this.startPos, this.endPos);
     const seedsToToss = seedsCount - requiredseeds;
 

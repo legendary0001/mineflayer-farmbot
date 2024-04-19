@@ -575,6 +575,8 @@ function createBot() {
           bot.chat("No chest found nearby to deposit wheat.");
         } else if (wheatDeposit.reason === "chestopenfailed") {
           bot.chat("Failed to open chest to deposit wheat.");
+        } else if (wheatDeposit.reason === "nowheat") {
+          // bot.chat("No wheat in inventory to deposit.");
         } else {
           bot.chat(`Failed to deposit wheat: ${wheatDeposit.reason}`);
         }

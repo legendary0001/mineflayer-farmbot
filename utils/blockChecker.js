@@ -1,69 +1,31 @@
-class blockChecker {
+class BlockChecker {
   constructor(bot) {
     this.bot = bot;
   }
 
-  async isDirt(pos, mcData) {
+  async checkBlockType(pos, mcData, blockName) {
     const block = await this.bot.blockAt(pos);
 
     if (!block) {
-      console.log(`Block at ${pos} is null`);
-      return false;
+      throw new Error(`Block at ${pos} is null`);
     }
 
-    // Check if the block is dirt or grass block
-    const blockType = block.type;
-    const dirtBlockId = mcData.blocksByName.dirt.id;
-    const grassBlockId = mcData.blocksByName.grass_block.id;
+    const blockId = mcData.blocksByName[blockName].id;
 
-    if (blockType === dirtBlockId || blockType === grassBlockId) {
-    //  console.log(`Block at ${pos} is dirt or grass`);
-      return true;
-    } else {
-     // console.log(`Block at ${pos} is not dirt or grass, it's ${blockType}`);
-      return false;
-    }
+    return block.type === blockId;
+  }
+
+  async isDirt(pos, mcData) {
+    return this.checkBlockType(pos, mcData, 'dirt') || this.checkBlockType(pos, mcData, 'grass_block');
   }
 
   async isFarmland(pos, mcData) {
-    const block = await this.bot.blockAt(pos);
-
-    if (!block) {
-      console.log(`Block at ${pos} is null`);
-      return false;
-    }
-
-    // Check if the block is farmland
-    const farmlandBlockId = mcData.blocksByName.farmland.id;
-
-    if (block.type === farmlandBlockId) {
-    //  console.log(`Block at ${pos} is farmland`);
-      return true;
-    } else {
-     // console.log(`Block at ${pos} is not farmland, it's ${block.type}`);
-      return false;
-    }
+    return this.checkBlockType(pos, mcData, 'farmland');
   }
 
   async isWheat(pos, mcData) {
-    const block = await this.bot.blockAt(pos);
-
-    if (!block) {
-      console.log(`Block at ${pos} is null`);
-      return false;
-    }
-
-    // Check if the block is wheat
-    const wheatBlockId = mcData.blocksByName.wheat.id;
-
-    if (block.type === wheatBlockId) {
-  //    console.log(`Block at ${pos} is wheat`);
-      return true;
-    } else {
-    //  console.log(`Block at ${pos} is not wheat, it's ${block.type}`);
-      return false;
-    }
+    return this.checkBlockType(pos, mcData, 'wheat');
   }
 }
 
-module.exports = blockChecker;
+module.exports = BlockChecker;

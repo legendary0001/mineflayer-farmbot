@@ -10,7 +10,6 @@ I made this because wheat farming is only semi automatic through redstone
 - Inventory management: The bot manages its inventory, equipping tools and seeds as needed, and depositing harvested crops in a chest.
 - Block type checking: The bot checks the type of each block in the specified farming area and performs the appropriate action.
 - Disconnection handling: The bot attempts to reconnect every 20 seconds if it gets disconnected.
-- Persistence: The bot reads and writes to a `data.json` file to persist its state across sessions. This includes the farming area coordinates and whether automatic farming is enabled.
 - Chat commands: The bot listens for chat commands and responds to commands like `!help`, `!exit`, `!enable`, `!disable`, and `!set`. These commands allow users to interact with the bot and control its behavior.
 
 ## Installation
@@ -38,7 +37,7 @@ I made this because wheat farming is only semi automatic through redstone
 
 ## Notes
 
-1.  currently bot dies of hunger code has to be modified to disable sprint if hunger is low and also a function to eat food or craft and eat food is feasable
+1.  currently bot dies of hunger code has to be modified to disable sprint if hunger is low and  to eat food or craft  if feasable
 2.  bot doesnt defend itself
 3.  bot doesnt do anti afk techniques if it is idle
     1 & 2 workaround - give bot effect through command block(resistance,saturation,instanthealth,etc) or set his respawn point(through bed by logging into bot or /setworldspawn cmd) near farm or splashing saturation and health potions on him (expensive)

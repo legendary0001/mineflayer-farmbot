@@ -6,7 +6,7 @@ I made this because wheat farming is only semi automatic through redstone
 ## Features
 
 - farming: The bot can till land, plant seeds, and harvest crops.
-- overflow prevention: bot stoping farming if the chest nearby
+- overflow prevention: bot stops farming if the chest nearby
 - Inventory management: The bot manages its inventory, equipping tools and seeds as needed, and depositing harvested crops in a chest.
 - Block type checking: The bot checks the type of each block in the specified farming area and performs the appropriate action.
 - Disconnection handling: The bot attempts to reconnect every 20 seconds if it gets disconnected.
